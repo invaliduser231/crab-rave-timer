@@ -2,6 +2,9 @@
 
 This script uses Selenium and the ChromeDriver to navigate to a YouTube video, pause the video, and then start playing the video at exactly midnight on New Year's Eve.
 
+# Important
+If the video does not pause automatically, you need to pause. Resume works to 100% 
+
 ## Requirements
 
 - Node.js
