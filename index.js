@@ -51,9 +51,9 @@ async function main() {
       // Check if the current time is 23:58:45
       console.log(currentTime.getHours(), currentTime.getMinutes(), currentTime.getSeconds());
       if (
-        currentTime.getHours() === 20 &&
-        currentTime.getMinutes() === 55 &&
-        currentTime.getSeconds() === 00 &&
+        currentTime.getHours() === 23 &&
+        currentTime.getMinutes() === 58 &&
+        currentTime.getSeconds() === 45 &&
         currentTime.getMilliseconds() < 400
       ) {
         console.log("Time to start the video!");
