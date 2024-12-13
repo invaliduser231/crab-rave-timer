@@ -8,7 +8,7 @@ const path = require("chromedriver").path;
 const chromeOptions = new chrome.Options();
 
 // Add the uBlock Origin extension to the ChromeOptions instance
-chromeOptions.addExtensions("./uBlock Origin 1.46.0.0.crx");
+chromeOptions.addExtensions("./uBlock-Origin-Chrome-Web-Store.crx");
 
 // Create a new ChromeDriver instance with the ChromeOptions and a new ChromeServiceBuilder instance
 const driver = chrome.Driver.createSession(
@@ -16,56 +16,46 @@ const driver = chrome.Driver.createSession(
   new chrome.ServiceBuilder(path).build()
 );
 
+// Time in seconds needed in the video to get to the drop
+const dropTimeInSeconds = 75;
+
 async function main() {
   try {
     // Navigate to the YouTube video page
     await driver.get("https://www.youtube.com/watch?v=LDU_Txk06tM");
 
     // Wait for the cookie banner to be present on the page and then click it
-    await driver.wait(
-      until.elementLocated(
-        By.css(
-          "[aria-label='Verwendung von Cookies und anderen Daten zu den beschriebenen Zwecken akzeptieren'] div.yt-spec-touch-feedback-shape__fill"
-        )
-      ),
-      10000
-    );
-    await driver
-      .findElement(
-        By.css(
-          "[aria-label='Verwendung von Cookies und anderen Daten zu den beschriebenen Zwecken akzeptieren'] div.yt-spec-touch-feedback-shape__fill"
-        )
-      )
-      .click();
+    const cookieBannerSelector = "[aria-label='Verwendung von Cookies und anderen Daten zu den beschriebenen Zwecken akzeptieren'] div.yt-spec-touch-feedback-shape__fill";
+    await driver.wait(until.elementLocated(By.css(cookieBannerSelector)), 10000);
+    await driver.findElement(By.css(cookieBannerSelector)).click();
 
     // Wait for the video element to be present on the page and then pause it
     await driver.wait(until.elementLocated(By.css("video")), 10000);
-    await driver.executeScript(
-      "document.getElementsByTagName('video')[0].pause();"
-    );
+    await driver.executeScript("document.getElementsByTagName('video')[0].pause();");
+
     // Set an interval to check the current time every 100 milliseconds
-    let interval = setInterval(function () {
+    let interval = setInterval(async function () {
       // Get the current time
       let currentTime = new Date();
 
-      // Check if the current time is 23:58:45
+      // Calculate the start time to get the drop right
+      let targetTime = new Date();
+      targetTime.setHours(0, 0, 0, 0); // Target time is midnight
+      let startTime = new Date(targetTime.getTime() - dropTimeInSeconds * 1000);
+
+      // Check if the current time matches the calculated start time
       console.log(currentTime.getHours(), currentTime.getMinutes(), currentTime.getSeconds());
-      if (
-        currentTime.getHours() === 23 &&
-        currentTime.getMinutes() === 58 &&
-        currentTime.getSeconds() === 45 &&
-        currentTime.getMilliseconds() < 400
-      ) {
+      if (currentTime >= startTime && currentTime <= targetTime) {
         console.log("Time to start the video!");
-        // Set the video to start playing at 0 seconds
-        driver.executeScript(
-          "document.getElementsByTagName('video')[0].currentTime = 0;"
-        );
+
+        // Calculate the lost time
+        let lostTime = (currentTime - startTime) / 1000;
+
+        // Set the video to start playing at the correct time
+        await driver.executeScript(`document.getElementsByTagName('video')[0].currentTime = ${lostTime};`);
 
         // Start the video
-        driver.executeScript(
-            "document.getElementsByTagName('video')[0].play();"
-        );
+        await driver.executeScript("document.getElementsByTagName('video')[0].play();");
 
         // Clear the interval
         clearInterval(interval);
@@ -73,7 +63,7 @@ async function main() {
     }, 100);
   } catch (error) {
     // Handle errors in the script
-    console.error(error);
+    console.error("An error occurred:", error);
   } finally {
     // Close the browser and shut down the ChromeDriver instance
     // await driver.quit();
